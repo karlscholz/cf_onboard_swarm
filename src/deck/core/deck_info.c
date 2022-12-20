@@ -33,8 +33,9 @@
 #include "deck.h"
 
 #include "ow.h"
-#include "crc.h"
+#include "crc32.h"
 #include "debug.h"
+#include "static_mem.h"
 
 #ifdef DEBUG
   #define DECK_INFO_DBG_PRINT(fmt, ...)  DEBUG_PRINT(fmt, ## __VA_ARGS__)
@@ -43,7 +44,7 @@
 #endif
 
 static int count = 0;
-static DeckInfo deckInfos[DECK_MAX_COUNT];
+NO_DMA_CCM_SAFE_ZERO_INIT static DeckInfo deckInfos[DECK_MAX_COUNT];
 
 static void enumerateDecks(void);
 static void checkPeriphAndGpioConflicts(void);
@@ -148,7 +149,7 @@ static bool infoDecode(DeckInfo * info)
     return false;
   }
 
-  crcHeader = crcSlow(info->raw, DECK_INFO_HEADER_SIZE);
+  crcHeader = crc32CalculateBuffer(info->raw, DECK_INFO_HEADER_SIZE);
   if(info->crc != crcHeader) {
     DEBUG_PRINT("Memory error: incorrect header CRC\n");
     return false;
@@ -159,7 +160,7 @@ static bool infoDecode(DeckInfo * info)
     return false;
   }
 
-  crcTlv = crcSlow(&info->raw[DECK_INFO_TLV_VERSION_POS], info->raw[DECK_INFO_TLV_LENGTH_POS]+2);
+  crcTlv = crc32CalculateBuffer(&info->raw[DECK_INFO_TLV_VERSION_POS], info->raw[DECK_INFO_TLV_LENGTH_POS]+2);
   if(crcTlv != info->raw[DECK_INFO_TLV_DATA_POS + info->raw[DECK_INFO_TLV_LENGTH_POS]]) {
     DEBUG_PRINT("Memory error: incorrect TLV CRC %x!=%x\n", (unsigned int)crcTlv,
                 info->raw[DECK_INFO_TLV_DATA_POS + info->raw[DECK_INFO_TLV_LENGTH_POS]]);

@@ -2,22 +2,19 @@
 
 #include <stdbool.h>
 #include "arm_math.h"
+#include "stabilizer_types.h"
 
-// Naive 3d vector type.
-#define vec3d_size 3
-typedef float vec3d[vec3d_size];
-typedef float mat3d[vec3d_size][vec3d_size];
-
-typedef struct baseStationGeometry_s {
-  vec3d origin;
-  mat3d mat;
+typedef struct {
+  __attribute__((aligned(4))) vec3d origin;
+  __attribute__((aligned(4))) mat3d mat;
+  bool valid;
 } __attribute__((packed)) baseStationGeometry_t;
 
-typedef struct baseStationEulerAngles_s {
-  float roll;
-  float pitch;
-  float yaw;
-} baseStationEulerAngles_t;
+typedef struct {
+  __attribute__((aligned(4))) mat3d baseStationInvertedRotationMatrixes;
+  __attribute__((aligned(4))) mat3d lh1Rotor2RotationMatrixes;
+  __attribute__((aligned(4))) mat3d lh1Rotor2InvertedRotationMatrixes;
+} baseStationGeometryCache_t;
 
 /**
  * @brief Find closest point between rays from two bases stations.
@@ -28,7 +25,7 @@ typedef struct baseStationEulerAngles_s {
  * @param position - (output) the closest point between the rays
  * @param postion_delta - (output) the distance between the rays at the closest point
  */
-bool lighthouseGeometryGetPositionFromRayIntersection(baseStationGeometry_t baseStations[2], float angles1[2], float angles2[2], vec3d position, float *position_delta);
+bool lighthouseGeometryGetPositionFromRayIntersection(const baseStationGeometry_t baseStations[2], float angles1[2], float angles2[2], vec3d position, float *position_delta);
 
 /**
  * @brief Get the base station position from the base station geometry in world reference frame. This position can be seen as the
@@ -37,7 +34,7 @@ bool lighthouseGeometryGetPositionFromRayIntersection(baseStationGeometry_t base
  * @param baseStation - Geometry data for the base statsion (position and orientation)
  * @param baseStationPos - (output) the base station position
  */
-void lighthouseGeometryGetBaseStationPosition(baseStationGeometry_t* baseStationGeometry, vec3d baseStationPos);
+void lighthouseGeometryGetBaseStationPosition(const baseStationGeometry_t* baseStationGeometry, vec3d baseStationPos);
 
 /**
  * @brief Get a normalized vector representing the direction of a ray in world reference frame, based on
@@ -85,11 +82,3 @@ void lighthouseGeometryGetSensorPosition(const vec3d cfPos, const arm_matrix_ins
  * @return true if the angle could be calculated
 */
 bool lighthouseGeometryYawDelta(const vec3d ipv, const vec3d spv, const vec3d n, float* yawDelta);
-
-/**
- * @brief Get the roll, pitch, yaw angles of the basestation rotation matrix
- * Note: the origin of the Crazyflie is set in the center of the deck
- *
- * @param baseStation - Geometry data for the base station (position and orientation)
- */
-void lighthouseGeometryCalculateAnglesFromRotationMatrix(baseStationGeometry_t* baseStationGeometry, baseStationEulerAngles_t* baseStationEulerAngles);

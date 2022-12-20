@@ -13,7 +13,11 @@
 #define LPS_TWR_TYPE  0
 #define LPS_TWR_SEQ   1
 #define LPS_TWR_ENABLE
+<<<<<<< HEAD
 #define NumUWB 3
+=======
+#define NumUWB 2
+>>>>>>> swarm3d
 
 extern uwbAlgorithm_t uwbTwrTagAlgorithm;
 
@@ -22,6 +26,7 @@ typedef struct {
   uint8_t answerTx[5];
   uint8_t finalRx[5];
   uint16_t reciprocalDistance;
+<<<<<<< HEAD
   float_t selfVx;
   float_t selfVy;
   float_t selfGz;
@@ -30,6 +35,17 @@ typedef struct {
 } __attribute__((packed)) lpsTwrTagReportPayload_t;
 
 bool twrGetSwarmInfo(int robNum, uint16_t* range, float* vx, float* vy, float* gyroZ, float* height);
+=======
+  float selfVx;
+  float selfVy;
+  float selfVz;
+  float selfGz;
+  float selfh;
+  bool keep_flying;
+} __attribute__((packed)) lpsTwrTagReportPayload_t;
+
+bool twrGetSwarmInfo(int robNum, uint16_t* range, float* vx, float* vy, float* vz, float* gyroZ, float* height);
+>>>>>>> swarm3d
 bool command_share(int RobIDfromControl, bool keep_flying);
 
 #endif // __LPS_TWR_TAG_H__

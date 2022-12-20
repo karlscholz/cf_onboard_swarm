@@ -11,16 +11,28 @@
 #include "configblock.h"
 #include "uart2.h"
 #include "log.h"
+<<<<<<< HEAD
+=======
+#include <math.h>
+#include "estimator_kalman.h"
+>>>>>>> swarm3d
 #define USE_MONOCAM 0
 
 static bool isInit;
 static bool onGround = true;
 static bool keepFlying = false;
 static setpoint_t setpoint;
+<<<<<<< HEAD
 static float_t relaVarInCtrl[NumUWB][STATE_DIM_rl];
 static float_t inputVarInCtrl[NumUWB][STATE_DIM_rl];
 static uint8_t selfID;
 static float_t height;
+=======
+static float relaVarInCtrl[NumUWB][STATE_DIM_rl];
+static float inputVarInCtrl[NumUWB][STATE_DIM_rl];
+static uint8_t selfID;
+static float height;
+>>>>>>> swarm3d
 
 static float relaCtrl_p = 2.0f;
 static float relaCtrl_i = 0.0001f;
@@ -42,11 +54,33 @@ static void setHoverSetpoint(setpoint_t *setpoint, float vx, float vy, float z, 
   commanderSetSetpoint(setpoint, 3);
 }
 
+<<<<<<< HEAD
 static void flyRandomIn1meter(void){
   float_t randomYaw = (rand() / (float)RAND_MAX) * 6.28f; // 0-2pi rad
   float_t randomVel = (rand() / (float)RAND_MAX); // 0-1 m/s
   float_t vxBody = randomVel * cosf(randomYaw);
   float_t vyBody = randomVel * sinf(randomYaw);
+=======
+static void set3DVel(setpoint_t *setpoint, float vx, float vy, float vz, float yawrate)
+{
+  setpoint->mode.z = modeVelocity;
+  setpoint->mode.yaw = modeVelocity;
+  setpoint->attitudeRate.yaw = yawrate;
+  setpoint->mode.x = modeVelocity;
+  setpoint->mode.y = modeVelocity;
+  setpoint->velocity.x = vx;
+  setpoint->velocity.y = vy;
+  setpoint->velocity.z = vz;
+  setpoint->velocity_body = true;
+  commanderSetSetpoint(setpoint, 3);
+}
+
+static void flyRandomIn1meter(float vel){
+  float randomYaw = (rand() / (float)RAND_MAX) * 6.28f; // 0-2pi rad
+  float randomVel = vel*(rand() / (float)RAND_MAX); // 0-1 m/s
+  float vxBody = randomVel * cosf(randomYaw);
+  float vyBody = randomVel * sinf(randomYaw);
+>>>>>>> swarm3d
   for (int i=1; i<100; i++) {
     setHoverSetpoint(&setpoint, vxBody, vyBody, height, 0);
     vTaskDelay(M2T(10));
@@ -91,6 +125,7 @@ static void flyViaDoor(char camYaw){
 #endif
 
 #define SIGN(a) ((a>=0)?1:-1)
+<<<<<<< HEAD
 static float_t targetX;
 static float_t targetY;
 static float PreErr_x = 0;
@@ -99,6 +134,18 @@ static float IntErr_x = 0;
 static float IntErr_y = 0;
 static uint32_t PreTime;
 static void formation0asCenter(float_t tarX, float_t tarY){
+=======
+static float targetX;
+static float targetY;
+static float PreErr_x = 0;
+static float PreErr_y = 0;
+static float PreErr_z = 0;
+static float IntErr_x = 0;
+static float IntErr_y = 0;
+static float IntErr_z = 0;
+static uint32_t PreTime;
+static void formation0asCenter(float tarX, float tarY){
+>>>>>>> swarm3d
   float dt = (float)(xTaskGetTickCount()-PreTime)/configTICK_RATE_HZ;
   PreTime = xTaskGetTickCount();
   if(dt > 1) // skip the first run of the EKF
@@ -106,6 +153,7 @@ static void formation0asCenter(float_t tarX, float_t tarY){
   // pid control for formation flight
   float err_x = -(tarX - relaVarInCtrl[0][STATE_rlX]);
   float err_y = -(tarY - relaVarInCtrl[0][STATE_rlY]);
+<<<<<<< HEAD
   float pid_vx = relaCtrl_p * err_x;
   float pid_vy = relaCtrl_p * err_y;
   float dx = (err_x - PreErr_x) / dt;
@@ -120,6 +168,30 @@ static void formation0asCenter(float_t tarX, float_t tarY){
   pid_vy += relaCtrl_i * constrain(IntErr_y, -0.5, 0.5);
   pid_vx = constrain(pid_vx, -1.5f, 1.5f);
   pid_vy = constrain(pid_vy, -1.5f, 1.5f);
+=======
+  float err_z = -(0 - relaVarInCtrl[0][STATE_rlZ]);
+  float pid_vx = relaCtrl_p * err_x;
+  float pid_vy = relaCtrl_p * err_y;
+  float pid_vz = relaCtrl_p * err_z;
+  float dx = (err_x - PreErr_x) / dt;
+  float dy = (err_y - PreErr_y) / dt;
+  float dz = (err_z - PreErr_z) / dt;
+  PreErr_x = err_x;
+  PreErr_y = err_y;
+  PreErr_z = err_z;
+  pid_vx += relaCtrl_d * dx;
+  pid_vy += relaCtrl_d * dy;
+  pid_vz += relaCtrl_d * dz;
+  IntErr_x += err_x * dt;
+  IntErr_y += err_y * dt;
+  IntErr_z += err_z * dt;
+  pid_vx += relaCtrl_i * constrain(IntErr_x, -0.5, 0.5);
+  pid_vy += relaCtrl_i * constrain(IntErr_y, -0.5, 0.5);
+  pid_vz += relaCtrl_i * constrain(IntErr_z, -0.5, 0.5);
+  pid_vx = constrain(pid_vx, -1.5f, 1.5f);
+  pid_vy = constrain(pid_vy, -1.5f, 1.5f);
+  pid_vz = constrain(pid_vz, -0.3f, 0.3f);
+>>>>>>> swarm3d
 
   // float rep_x = 0.0f;
   // float rep_y = 0.0f;
@@ -137,10 +209,17 @@ static void formation0asCenter(float_t tarX, float_t tarY){
   // pid_vx = constrain(pid_vx + rep_x, -1.5f, 1.5f);
   // pid_vy = constrain(pid_vy + rep_y, -1.5f, 1.5f);
 
+<<<<<<< HEAD
   setHoverSetpoint(&setpoint, pid_vx, pid_vy, height, 0);
 }
 
 // static void NDI_formation0asCenter(float_t tarX, float_t tarY){
+=======
+  set3DVel(&setpoint, pid_vx, pid_vy, pid_vz, 0);
+}
+
+// static void NDI_formation0asCenter(float tarX, float tarY){
+>>>>>>> swarm3d
 //   float err_x = -(tarX - relaVarInCtrl[0][STATE_rlX]);
 //   float err_y = -(tarY - relaVarInCtrl[0][STATE_rlY]);
 //   float rela_yaw = relaVarInCtrl[0][STATE_rlYaw];
@@ -155,6 +234,7 @@ static void formation0asCenter(float_t tarX, float_t tarY){
 
 void relativeControlTask(void* arg)
 {
+<<<<<<< HEAD
   static const float_t targetList[7][STATE_DIM_rl]={{0.0f, 0.0f, 0.0f}, {-1.0f, 0.5f, 0.0f}, {-1.0f, -0.5f, 0.0f}, {-1.0f, -1.5f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {-2.0f, 0.0f, 0.0f}};
   static uint32_t ctrlTick;
   systemWaitStart();
@@ -162,11 +242,26 @@ void relativeControlTask(void* arg)
   height = 0.5f;
   while(1) {
     vTaskDelay(10);
+=======
+  static uint32_t ctrlTick;
+  systemWaitStart();
+  static logVarId_t logIdStateIsFlying;
+  logIdStateIsFlying = logGetVarId("kalman", "inFlight");
+  // height = (float)selfID*0.1f+0.2f;
+  while(1) {
+    vTaskDelay(10);
+    if(selfID==0){
+      keepFlying = logGetUint(logIdStateIsFlying);
+      keepFlying = command_share(selfID, keepFlying);
+      continue;
+    }
+>>>>>>> swarm3d
 #if USE_MONOCAM
     if(selfID==0)
       uart2Getchar(&c);
 #endif
     keepFlying = command_share(selfID, keepFlying);
+<<<<<<< HEAD
     if(relativeInfoRead((float_t *)relaVarInCtrl, (float_t *)inputVarInCtrl) && keepFlying){
       // take off
       if(onGround){
@@ -176,6 +271,14 @@ void relativeControlTask(void* arg)
         }
         // unsynchronize
         for (int i=0; i<10*selfID; i++) {
+=======
+    if(relativeInfoRead((float *)relaVarInCtrl, (float *)inputVarInCtrl) && keepFlying){
+      // take off
+      if(onGround){
+        estimatorKalmanInit(); // reseting kalman filter
+        vTaskDelay(M2T(2000));
+        for (int i=0; i<50; i++) {
+>>>>>>> swarm3d
           setHoverSetpoint(&setpoint, 0, 0, 0.3f, 0);
           vTaskDelay(M2T(100));
         }
@@ -185,11 +288,42 @@ void relativeControlTask(void* arg)
 
       // control loop
       // setHoverSetpoint(&setpoint, 0, 0, height, 0); // hover
+<<<<<<< HEAD
       uint32_t tickInterval = xTaskGetTickCount() - ctrlTick;
       if( tickInterval < 20000){
         flyRandomIn1meter(); // random flight within first 10 seconds
         targetX = relaVarInCtrl[0][STATE_rlX];
         targetY = relaVarInCtrl[0][STATE_rlY];
+=======
+    //   if (selfID==0){
+    //       flyRandomIn1meter(1.0f);
+    //       continue;
+    //   }
+      uint32_t tickInterval = xTaskGetTickCount() - ctrlTick;
+      if( tickInterval < 20000){
+          flyRandomIn1meter(1.0f); // random flight within first 10 seconds
+        targetX = relaVarInCtrl[0][STATE_rlX];
+        targetY = relaVarInCtrl[0][STATE_rlY];
+
+        if ((tickInterval > 2000) && (tickInterval < 4000))
+            height = 0.3;
+        if ((tickInterval > 4000) && (tickInterval < 6000))
+            height = 0.5;
+        if ((tickInterval > 6000) && (tickInterval < 8000))
+            height = 0.7;
+        if ((tickInterval > 8000) && (tickInterval < 10000))
+            height = 0.4;
+        if ((tickInterval > 10000) && (tickInterval < 12000))
+            height = 0.8;
+        if ((tickInterval > 12000) && (tickInterval < 14000))
+            height = 0.3;
+        if ((tickInterval > 14000) && (tickInterval < 16000))
+            height = 0.7;
+        if ((tickInterval > 16000) && (tickInterval < 18000))
+            height = 0.9;
+        if ((tickInterval > 18000) && (tickInterval < 20000))
+            height = 0.5;
+>>>>>>> swarm3d
       }
       else
       {
@@ -200,6 +334,7 @@ void relativeControlTask(void* arg)
         else
           formation0asCenter(targetX, targetY);
 #else
+<<<<<<< HEAD
         if ( (tickInterval > 20000) && (tickInterval < 50000) ){ // 0-random, other formation
           if(selfID==0)
             flyRandomIn1meter();
@@ -223,6 +358,28 @@ void relativeControlTask(void* arg)
             setHoverSetpoint(&setpoint, 0, 0, height, 0);
           else
             formation0asCenter(targetX, targetY);
+=======
+        if ( (tickInterval > 20000) && (tickInterval < 30000) ){ // formation
+          srand((unsigned int) relaVarInCtrl[0][STATE_rlX]*100);
+          formation0asCenter(targetX, targetY);
+          // NDI_formation0asCenter(targetX, targetY);
+          // lastTick = tickInterval;
+        }
+
+        static float relaXof2in1=0.7f, relaYof2in1=0.0f;
+        if ( (tickInterval > 30000) ){
+          // if(tickInterval - lastTick > 3000)
+          // {
+          //   lastTick = tickInterval;
+          //   relaXof2in1 = (rand() / (float)RAND_MAX) * 0.8f + 0.2f; // in front
+          //   relaYof2in1 = ((rand() / (float)RAND_MAX) -0.5f)* 0.7f * relaXof2in1; // horizon offset based on depth
+          //   height = (rand() / (float)RAND_MAX) * 0.8f + 0.2f;
+          // }
+
+          targetX = -cosf(relaVarInCtrl[0][STATE_rlYaw])*relaXof2in1 + sinf(relaVarInCtrl[0][STATE_rlYaw])*relaYof2in1;
+          targetY = -sinf(relaVarInCtrl[0][STATE_rlYaw])*relaXof2in1 - cosf(relaVarInCtrl[0][STATE_rlYaw])*relaYof2in1;
+          formation0asCenter(targetX, targetY); 
+>>>>>>> swarm3d
         }
 #endif
       }
@@ -231,8 +388,15 @@ void relativeControlTask(void* arg)
       // landing procedure
       if(!onGround){
         for (int i=1; i<5; i++) {
+<<<<<<< HEAD
           setHoverSetpoint(&setpoint, 0, 0, 0.3f-(float)i*0.05f, 0);
           vTaskDelay(M2T(10));
+=======
+          if(selfID!=0){
+          setHoverSetpoint(&setpoint, 0, 0, 0.3f-(float)i*0.05f, 0);
+          vTaskDelay(M2T(10));
+          }
+>>>>>>> swarm3d
         }
         onGround = true;
       } 
@@ -250,6 +414,10 @@ void relativeControlInit(void)
     uart2Init(115200); // only CF0 has monoCam and usart comm
 #endif
   xTaskCreate(relativeControlTask,"relative_Control",configMINIMAL_STACK_SIZE, NULL,3,NULL );
+<<<<<<< HEAD
+=======
+  height = 0.5f;
+>>>>>>> swarm3d
   isInit = true;
 }
 

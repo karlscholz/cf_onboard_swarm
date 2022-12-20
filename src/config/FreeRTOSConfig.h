@@ -137,6 +137,10 @@ to exclude the API function. */
 #define configUSE_APPLICATION_TASK_TAG  1
 #define configQUEUE_REGISTRY_SIZE       10
 
+#ifdef DEBUG
+#define configRECORD_STACK_HIGH_ADDRESS 1
+#endif
+
 #define TASK_LED_ID_NBR         1
 #define TASK_RADIO_ID_NBR       2
 #define TASK_STABILIZER_ID_NBR  3
@@ -153,6 +157,8 @@ to exclude the API function. */
     debugSendTraceInfo((int)pxCurrentTCB->pxTaskTag); \
   }
 */
+
+#define configSUPPORT_STATIC_ALLOCATION 1
 
 // Queue monitoring
 #ifdef DEBUG_QUEUE_MONITOR

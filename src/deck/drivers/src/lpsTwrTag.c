@@ -8,7 +8,11 @@
 #include "estimator_kalman.h"
 
 #define ANTENNA_OFFSET 154.6   // In meter
+<<<<<<< HEAD
 #define basicAddr 0xbccf000000000000
+=======
+#define basicAddr 0xbccf851300000000
+>>>>>>> swarm3d
 // Define: id = last_number_of_address - 5
 static uint8_t selfID;
 static locoAddress_t selfAddress;
@@ -16,10 +20,18 @@ static const uint64_t antennaDelay = (ANTENNA_OFFSET*499.2e6*128)/299792458.0; /
 
 typedef struct {
   uint16_t distance[NumUWB];
+<<<<<<< HEAD
   float_t vx[NumUWB];
   float_t vy[NumUWB];
   float_t gz[NumUWB];
   float_t h[NumUWB];
+=======
+  float vx[NumUWB];
+  float vy[NumUWB];
+  float vz[NumUWB];
+  float gz[NumUWB];
+  float h[NumUWB];
+>>>>>>> swarm3d
   bool refresh[NumUWB];
   bool keep_flying;
 } swarmInfo_t;
@@ -40,8 +52,13 @@ static bool rangingOk;
 static bool current_mode_trans;
 static uint8_t current_receiveID;
 
+<<<<<<< HEAD
 static bool checkTurn;
 static uint32_t checkTurnTick = 0;
+=======
+// static bool checkTurn;
+// static uint32_t checkTurnTick = 0;
+>>>>>>> swarm3d
 
 // Median filter for distance ranging (size=3)
 typedef struct {
@@ -81,6 +98,7 @@ static void txcallback(dwDevice_t *dev)
         final_tx = departure;
         break;
       case LPS_TWR_REPORT+1:
+<<<<<<< HEAD
         if( (current_receiveID == 0) || (current_receiveID-1 == selfID) ){
           // current_receiveID = current_receiveID;
           current_mode_trans = false;
@@ -94,6 +112,21 @@ static void txcallback(dwDevice_t *dev)
         }else{
           current_receiveID = current_receiveID - 1;
         }
+=======
+        // if( (current_receiveID == 0) || (current_receiveID-1 == selfID) ){
+        //   // current_receiveID = current_receiveID;
+        //   current_mode_trans = false;
+        //   dwIdle(dev);
+        //   dwSetReceiveWaitTimeout(dev, 10000);
+        //   dwNewReceive(dev);
+        //   dwSetDefaults(dev);
+        //   dwStartReceive(dev);
+        //   checkTurn = true;
+        //   checkTurnTick = xTaskGetTickCount();
+        // }else{
+        //   current_receiveID = current_receiveID - 1;
+        // }
+>>>>>>> swarm3d
         break;
     }
   }else{
@@ -117,7 +150,11 @@ static void rxcallback(dwDevice_t *dev) {
   dwGetData(dev, (uint8_t*)&rxPacket, dataLength);
   if (rxPacket.destAddress != selfAddress) {
     if(current_mode_trans){
+<<<<<<< HEAD
       current_mode_trans = false;
+=======
+      // current_mode_trans = false;
+>>>>>>> swarm3d
       dwIdle(dev);
       dwSetReceiveWaitTimeout(dev, 10000);
     }
@@ -172,6 +209,10 @@ static void rxcallback(dwDevice_t *dev) {
           rangingOk = true;
           state.vx[current_receiveID] = report->selfVx;
           state.vy[current_receiveID] = report->selfVy;
+<<<<<<< HEAD
+=======
+          state.vz[current_receiveID] = report->selfVz;
+>>>>>>> swarm3d
           state.gz[current_receiveID] = report->selfGz;
           state.h[current_receiveID]  = report->selfh;
           if(current_receiveID==0)
@@ -183,12 +224,20 @@ static void rxcallback(dwDevice_t *dev) {
         txPacket.payload[LPS_TWR_TYPE] = LPS_TWR_REPORT+1;
         txPacket.payload[LPS_TWR_SEQ] = rxPacket.payload[LPS_TWR_SEQ];
         report2->reciprocalDistance = calcDist;
+<<<<<<< HEAD
         estimatorKalmanGetSwarmInfo(&report2->selfVx, &report2->selfVy, &report2->selfGz, &report2->selfh);
+=======
+        estimatorKalmanGetSwarmInfo(&report2->selfVx, &report2->selfVy, &report2->selfVz, &report2->selfGz, &report2->selfh);
+>>>>>>> swarm3d
         report2->keep_flying = state.keep_flying;
         dwNewTransmit(dev);
         dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+2+sizeof(lpsTwrTagReportPayload_t));
         dwWaitForResponse(dev, true);
+<<<<<<< HEAD
         dwStartTransmit(dev);  
+=======
+        dwStartTransmit(dev);
+>>>>>>> swarm3d
         break;
       }
     }
@@ -218,7 +267,11 @@ static void rxcallback(dwDevice_t *dev) {
         memcpy(&report->pollRx, &poll_rx, 5);
         memcpy(&report->answerTx, &answer_tx, 5);
         memcpy(&report->finalRx, &final_rx, 5);
+<<<<<<< HEAD
         estimatorKalmanGetSwarmInfo(&report->selfVx, &report->selfVy, &report->selfGz, &report->selfh);
+=======
+        estimatorKalmanGetSwarmInfo(&report->selfVx, &report->selfVy, &report->selfVz, &report->selfGz, &report->selfh);
+>>>>>>> swarm3d
         report->keep_flying = state.keep_flying;
         dwNewTransmit(dev);
         dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+2+sizeof(lpsTwrTagReportPayload_t));
@@ -244,6 +297,10 @@ static void rxcallback(dwDevice_t *dev) {
           median_data[rangingID].distance_history[median_data[rangingID].index_inserting] = calcDist; 
           state.vx[rangingID] = report2->selfVx;
           state.vy[rangingID] = report2->selfVy;
+<<<<<<< HEAD
+=======
+          state.vz[rangingID] = report2->selfVz;
+>>>>>>> swarm3d
           state.gz[rangingID] = report2->selfGz;
           state.h[rangingID]  = report2->selfh;
           if(rangingID==0)
@@ -251,6 +308,7 @@ static void rxcallback(dwDevice_t *dev) {
           state.refresh[rangingID] = true;
         }
         rangingOk = true;
+<<<<<<< HEAD
         uint8_t fromID = (uint8_t)(rxPacket.sourceAddress & 0xFF);
         if( selfID == fromID + 1 || selfID == 0 ){
           current_mode_trans = true;
@@ -276,6 +334,33 @@ static void rxcallback(dwDevice_t *dev) {
           dwSetDefaults(dev);
           dwStartReceive(dev);
         }
+=======
+        // uint8_t fromID = (uint8_t)(rxPacket.sourceAddress & 0xFF);
+        // if( selfID == fromID + 1 || selfID == 0 ){
+        //   current_mode_trans = true;
+        //   dwIdle(dev);
+        //   dwSetReceiveWaitTimeout(dev, 1000);
+        //   if(selfID == NumUWB-1)
+        //     current_receiveID = 0;
+        //   else
+        //     current_receiveID = NumUWB - 1;
+        //   if(selfID == 0)
+        //     current_receiveID = NumUWB - 2; // immediate problem
+        //   txPacket.payload[LPS_TWR_TYPE] = LPS_TWR_POLL;
+        //   txPacket.payload[LPS_TWR_SEQ] = 0;
+        //   txPacket.sourceAddress = selfAddress;
+        //   txPacket.destAddress = basicAddr + current_receiveID;
+        //   dwNewTransmit(dev);
+        //   dwSetDefaults(dev);
+        //   dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+2);
+        //   dwWaitForResponse(dev, true);
+        //   dwStartTransmit(dev);
+        // }else{
+          dwNewReceive(dev);
+          dwSetDefaults(dev);
+          dwStartReceive(dev);
+        // }
+>>>>>>> swarm3d
         break;
       }
     }
@@ -287,7 +372,11 @@ static uint32_t twrTagOnEvent(dwDevice_t *dev, uwbEvent_t event)
   switch(event) {
     case eventPacketReceived:
       rxcallback(dev);
+<<<<<<< HEAD
       checkTurn = false;
+=======
+      // checkTurn = false;
+>>>>>>> swarm3d
       break;
     case eventPacketSent:
       txcallback(dev);
@@ -308,6 +397,7 @@ static uint32_t twrTagOnEvent(dwDevice_t *dev, uwbEvent_t event)
         dwStartTransmit(dev);
       }else
       {
+<<<<<<< HEAD
         if(xTaskGetTickCount() > checkTurnTick + 20) // > 20ms
         {
           if(checkTurn == true){
@@ -327,6 +417,27 @@ static uint32_t twrTagOnEvent(dwDevice_t *dev, uwbEvent_t event)
             break;
           }
         }
+=======
+        // if(xTaskGetTickCount() > checkTurnTick + 20) // > 20ms
+        // {
+        //   if(checkTurn == true){
+        //     current_mode_trans = true;
+        //     dwIdle(dev);
+        //     dwSetReceiveWaitTimeout(dev, 1000);
+        //     txPacket.payload[LPS_TWR_TYPE] = LPS_TWR_POLL;
+        //     txPacket.payload[LPS_TWR_SEQ] = 0;
+        //     txPacket.sourceAddress = selfAddress;
+        //     txPacket.destAddress = basicAddr + current_receiveID;
+        //     dwNewTransmit(dev);
+        //     dwSetDefaults(dev);
+        //     dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+2);
+        //     dwWaitForResponse(dev, true);
+        //     dwStartTransmit(dev);
+        //     checkTurn = false;
+        //     break;
+        //   }
+        // }
+>>>>>>> swarm3d
         dwNewReceive(dev);
 	      dwSetDefaults(dev);
         dwStartReceive(dev);
@@ -375,7 +486,11 @@ static void twrTagInit(dwDevice_t *dev)
   }
 
   state.keep_flying = false;
+<<<<<<< HEAD
   checkTurn = false;
+=======
+  // checkTurn = false;
+>>>>>>> swarm3d
   rangingOk = false;
 }
 
@@ -407,12 +522,20 @@ static uint8_t getActiveAnchorIdList(uint8_t unorderedAnchorList[], const int ma
   return count;
 }
 
+<<<<<<< HEAD
 bool twrGetSwarmInfo(int robNum, uint16_t* range, float* vx, float* vy, float* gyroZ, float* height) {
+=======
+bool twrGetSwarmInfo(int robNum, uint16_t* range, float* vx, float* vy, float* vz, float* gyroZ, float* height) {
+>>>>>>> swarm3d
   if(state.refresh[robNum]==true) {
     state.refresh[robNum] = false;
     *range = state.distance[robNum];
     *vx = state.vx[robNum];
     *vy = state.vy[robNum];
+<<<<<<< HEAD
+=======
+    *vz = state.vz[robNum];
+>>>>>>> swarm3d
     *gyroZ = state.gz[robNum];
     *height = state.h[robNum];
     return(true);
